@@ -1,0 +1,334 @@
+<!DOCTYPE html><html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Pita PVP Melhorado</title>
+  <style>
+    body {
+      margin: 0;
+      background: radial-gradient(circle, #111, #000);
+      color: #fff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }canvas {
+  display: block;
+  margin: auto;
+  width: 100%;
+  height: 100vh;
+  background: black;
+}
+
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#messages {
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  font-weight: bold;
+  color: yellow;
+  text-shadow: 2px 2px 4px #000;
+  animation: blink 0.5s infinite alternate;
+}
+
+@keyframes blink {
+  from { opacity: 1; }
+  to { opacity: 0.5; }
+}
+
+#footer {
+  position: absolute;
+  bottom: 5px;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: #aaa;
+}
+
+#joystick-container {
+  position: absolute;
+  bottom: 20%;
+  left: 30%;
+  transform: translate(-50%, 50%);
+  width: 220px;
+  height: 220px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  touch-action: none;
+}
+
+#joystick {
+  width: 110px;
+  height: 110px;
+  background: rgba(0,255,0,0.5);
+  border-radius: 50%;
+  position: absolute;
+  left: 55px;
+  top: 55px;
+}
+
+#fire {
+  position: absolute;
+  bottom: 20%;
+  right: 30%;
+  transform: translate(50%, 50%);
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: none;
+  background: red;
+  color: white;
+  font-size: 36px;
+  font-weight: bold;
+}
+
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="hud">
+    Pontuação: <span id="score">0</span> | Recorde: <span id="highscore">0</span> | Vidas: <span id="lives">3</span>
+  </div>
+  <div id="messages"></div>
+  <div id="footer">Desenvolvido por Andre Pita — Pita PVP 2025</div>  <div id="joystick-container">
+    <div id="joystick"></div>
+  </div>
+  <button id="fire">🥟</button>  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // ===== Sprites via SVG =====
+    const svgPlayer = `
+      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
+        <polygon points='32,4 48,52 32,44 16,52' fill='#00e5ff' stroke='#00bcd4' stroke-width='2'/>
+        <circle cx='32' cy='24' r='6' fill='#1e90ff'/>
+      </svg>`;
+    const svgEnemy = `
+      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
+        <rect x='10' y='14' width='44' height='36' rx='10' fill='#ff4d4d' stroke='#b30000' stroke-width='2'/>
+        <circle cx='24' cy='30' r='7' fill='#fff'/>
+        <circle cx='40' cy='30' r='7' fill='#fff'/>
+        <circle cx='24' cy='30' r='3' fill='#222'/>
+        <circle cx='40' cy='30' r='3' fill='#222'/>
+      </svg>`;
+    const svgBullet = `
+      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
+        <rect x='14' y='4' width='4' height='24' rx='2' fill='#fff36d'/>
+      </svg>`;
+
+    function svgToImg(svgStr){
+      const img = new Image();
+      img.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgStr);
+      return img;
+    }
+
+    let playerImg = svgToImg(svgPlayer);
+    let enemyImg = svgToImg(svgEnemy);
+    let bulletImg = svgToImg(svgBullet);
+
+    const player = { x: canvas.width/2, y: canvas.height/2, size: 30, speed: 5, dx: 0, dy: 0 };
+    const bullets = [];
+    const enemies = [];
+    const enemyBullets = [];
+    const particles = [];
+    const powerups = [];
+
+    let score = 0;
+    let lives = 3;
+    let highscore = localStorage.getItem("pitaHighscore") || 0;
+    document.getElementById("highscore").innerText = highscore;
+    document.getElementById("lives").innerText = lives;
+
+    const messages = document.getElementById("messages");
+    const scoreElement = document.getElementById("score");
+    const livesElement = document.getElementById("lives");
+
+    function showMessage(text) {
+      messages.innerText = text;
+      setTimeout(() => { if(messages.innerText===text) messages.innerText = ''; }, 1200);
+    }
+
+    function drawPlayer() {
+      ctx.drawImage(playerImg, player.x - player.size, player.y - player.size, player.size*2, player.size*2);
+    }
+
+    function movePlayer() {
+      player.x += player.dx;
+      player.y += player.dy;
+      if (player.x < player.size) player.x = player.size;
+      if (player.y < player.size) player.y = player.size;
+      if (player.x > canvas.width - player.size) player.x = canvas.width - player.size;
+      if (player.y > canvas.height - player.size) player.y = canvas.height - player.size;
+    }
+
+    function fireBullet(triple=false) {
+      bullets.push({ x: player.x, y: player.y, size: 18, dx: 0, dy: -7 });
+      if(triple){
+        bullets.push({ x: player.x, y: player.y, size: 18, dx: -2, dy: -7 });
+        bullets.push({ x: player.x, y: player.y, size: 18, dx: 2, dy: -7 });
+        showMessage("Tiro Triplo!");
+      } else {
+        showMessage("Pastel lançado!");
+      }
+    }
+
+    function drawBullets() {
+      bullets.forEach((b, i) => {
+        b.x += b.dx; b.y += b.dy;
+        ctx.drawImage(bulletImg, b.x - b.size/2, b.y - b.size/2, b.size, b.size);
+        if (b.y < -20) bullets.splice(i, 1);
+      });
+    }
+
+    function spawnEnemy() {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height / 2;
+      enemies.push({ x, y, size: 30, speed: 2 });
+    }
+
+    function drawEnemies() {
+      enemies.forEach((e, ei) => {
+        ctx.drawImage(enemyImg, e.x - e.size, e.y - e.size, e.size*2, e.size*2);
+
+        if (player.x > e.x) e.x += e.speed;
+        if (player.x < e.x) e.x -= e.speed;
+        if (player.y > e.y) e.y += e.speed;
+        if (player.y < e.y) e.y -= e.speed;
+
+        if (Math.random() < 0.01) {
+          enemyBullets.push({ x: e.x, y: e.y, size: 7, dx: (player.x - e.x) / 30, dy: (player.y - e.y) / 30 });
+        }
+
+        bullets.forEach((b, bi) => {
+          const dist = Math.hypot(b.x - e.x, b.y - e.y);
+          if (dist < (b.size/2) + e.size) {
+            bullets.splice(bi, 1);
+            enemies.splice(ei, 1);
+            score += 10;
+            scoreElement.innerText = score;
+            if(score > highscore){
+              highscore = score;
+              localStorage.setItem("pitaHighscore", highscore);
+              document.getElementById("highscore").innerText = highscore;
+            }
+          }
+        });
+
+        const distP = Math.hypot(player.x - e.x, player.y - e.y);
+        if (distP < player.size + e.size) {
+          loseLife();
+        }
+      });
+    }
+
+    function drawEnemyBullets() {
+      enemyBullets.forEach((b, i) => {
+        b.x += b.dx; b.y += b.dy;
+        ctx.fillStyle = "orange";
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.size, 0, Math.PI*2);
+        ctx.fill();
+
+        const dist = Math.hypot(b.x - player.x, b.y - player.y);
+        if (dist < b.size + player.size) {
+          loseLife();
+          enemyBullets.splice(i,1);
+        }
+        if (b.y > canvas.height+20) enemyBullets.splice(i,1);
+      });
+    }
+
+    function loseLife(){
+      lives--;
+      livesElement.innerText = lives;
+      if(lives <= 0){
+        showMessage("Game Over!");
+        resetGame();
+      } else {
+        showMessage("Você perdeu uma vida!");
+        player.x = canvas.width/2;
+        player.y = canvas.height/2;
+      }
+    }
+
+    function resetGame() {
+      player.x = canvas.width/2;
+      player.y = canvas.height/2;
+      bullets.length = 0;
+      enemies.length = 0;
+      enemyBullets.length = 0;
+      particles.length = 0;
+      powerups.length = 0;
+      score = 0;
+      lives = 3;
+      scoreElement.innerText = score;
+      livesElement.innerText = lives;
+    }
+
+    function update(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      movePlayer();
+      drawPlayer();
+      drawBullets();
+      drawEnemies();
+      drawEnemyBullets();
+      requestAnimationFrame(update);
+    }
+
+    setInterval(spawnEnemy,2000);
+    update();
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "ArrowRight" || e.key === "d") player.dx = player.speed;
+      if (e.key === "ArrowLeft" || e.key === "a") player.dx = -player.speed;
+      if (e.key === "ArrowUp" || e.key === "w") player.dy = -player.speed;
+      if (e.key === "ArrowDown" || e.key === "s") player.dy = player.speed;
+      if (e.key === " ") fireBullet(Math.random()<0.2);
+    });
+
+    document.addEventListener("keyup", e => {
+      if (["ArrowRight", "ArrowLeft", "d", "a"].includes(e.key)) player.dx = 0;
+      if (["ArrowUp", "ArrowDown", "w", "s"].includes(e.key)) player.dy = 0;
+    });
+
+    document.getElementById("fire").addEventListener("touchstart", ()=>fireBullet(Math.random()<0.2));
+
+    const joystickContainer = document.getElementById("joystick-container");
+    const joystick = document.getElementById("joystick");
+    let joystickActive = false;
+
+    joystickContainer.addEventListener("touchstart", () => joystickActive = true);
+    joystickContainer.addEventListener("touchmove", (e) => {
+      if (!joystickActive) return;
+      const rect = joystickContainer.getBoundingClientRect();
+      const touch = e.touches[0];
+      const x = touch.clientX - rect.left - rect.width/2;
+      const y = touch.clientY - rect.top - rect.height/2;
+      const dist = Math.min(Math.hypot(x,y), 80);
+      const angle = Math.atan2(y,x);
+      joystick.style.left = 55 + Math.cos(angle)*dist + "px";
+      joystick.style.top = 55 + Math.sin(angle)*dist + "px";
+      player.dx = Math.cos(angle) * player.speed;
+      player.dy = Math.sin(angle) * player.speed;
+    });
+
+    joystickContainer.addEventListener("touchend", () => {
+      joystickActive = false;
+      joystick.style.left = "55px";
+      joystick.style.top = "55px";
+      player.dx = 0;
+      player.dy = 0;
+    });
+  </script></body>
+</html>
