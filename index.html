@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Raspadinha do Pita —  PWA</title>
+<title>Cassino do Pita —  PWA</title>
 <meta name="theme-color" content="#0ff">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIwAAACMCAYAAABaX0b+AAA...==">
 <style>
@@ -152,7 +152,7 @@
 <header>
   <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:12px">
     <div>
-      <div class="brand"><span class="blink">✦</span> Raspadinha do Pita <span class="blink">✦</span></div>
+      <div class="brand"><span class="blink">✦</span> Cassino do Pita <span class="blink">✦</span></div>
       <div class="small">Desenvolvido por Andre Pita — VENHA LUCRAR</div>
     </div>
     <div class="row">
@@ -189,7 +189,7 @@
       <div class="testimonials">
         <div class="testi">
           <div class="name">Marina • SP</div>
-          <div>Adorei a raspadinha! No demo consegui pagar o mercado 😄</div>
+          <div>Adorei a raspadinha! consegui pagar o mercado 😄</div>
         </div>
         <div class="testi">
           <div class="name">Rafael • RJ</div>
@@ -197,7 +197,7 @@
         </div>
         <div class="testi">
           <div class="name">Carlos • DF</div>
-          <div>No modo demo fiz boas rodadas nos slots. Interface 10/10.</div>
+          <div> fiz boas rodadas nos slots. Interface 10/10.</div>
         </div>
       </div>
     </div>
@@ -218,17 +218,17 @@
         </div>
         <div class="game-card" data-view="aviator">
           <div class="thumb"></div>
-          <h4>Aviator Demo</h4>
+          <h4>Aviator </h4>
         </div>
         <div class="game-card" data-view="double">
           <div class="thumb"></div>
-          <h4>Double Demo</h4>
+          <h4>Double </h4>
         </div>
       </div>
 
       <!-- Views -->
       <div id="view-scratch" class="view">
-        <div class="neon-title">Raspadinha do Pita</div>
+        <div class="neon-title">Cassino do Pita </div>
         <div class="dev">Cartela única raspável • encontre 3 iguais</div>
         <div class="scratch-wrap">
           <div class="scratch-card">
@@ -297,7 +297,7 @@
       </div>
 
       <div id="view-aviator" class="view">
-        <div class="neon-title">Aviator Demo</div>
+        <div class="neon-title">Aviator </div>
         <div class="aviator-wrap">
           <div class="aviator">
             <div class="row">
@@ -314,7 +314,7 @@
       </div>
 
       <div id="view-double" class="view">
-        <div class="neon-title">Double Demo</div>
+        <div class="neon-title">Double </div>
         <div class="double-wrap">
           <div class="double">
             <div class="row">
@@ -389,7 +389,7 @@
       <div class="field"><label>Telefone</label><input id="wdPhone" placeholder="ex: 11999999999" inputmode="numeric"></div>
       <div class="field"><label>Chave Pix</label><input id="wdPix" placeholder="CPF/Telefone/Chave"></div>
       <div class="field"><label>Valor (até saldo)</label><input id="wdValue" type="number" min="1" step="1"></div>
-      <div class="small">Um protocolo de saque DEMO será gerado (não transfere dinheiro real).</div>
+      <div class="small">Um protocolo de saque será gerado.</div>
     </div>
     <div class="actions">
       <button class="btn" data-close="#wdModal">Cancelar</button>
@@ -514,13 +514,13 @@ $('#applyPromo').onclick = ()=>{
   u.balance = (u.balance||0) + 100;
   store.set('pita_users', users);
   updateBalanceUI();
-  alertBox('Sucesso','Crédito demo de R$ 100,00 adicionado!');
+  alertBox('Sucesso','Crédito de R$ 100,00 adicionado!');
 }
 
 /* =======================
    Deposit (DEMO)
 ======================= */
-$('#openDeposit').onclick = ()=>{ ensureAuth(); openModal('#depModal'); drawQR('#qrCanvas', '00020126360014BR.GOV.BCB.PIX0111demo-pix5204000053039865406100.005802BR5920Raspadinha do Pita6009Sao Paulo62070503***6304ABCD'); }
+$('#openDeposit').onclick = ()=>{ ensureAuth(); openModal('#depModal'); drawQR('#qrCanvas', '00020126360014BR.GOV.BCB.PIX0111demo-pix5204000053039865406100.005802BR59206009Sao Paulo62070503***6304ABCD'); }
 $('#confirmDeposit').onclick = ()=>{
   ensureAuth();
   const u = users[session];
@@ -528,7 +528,7 @@ $('#confirmDeposit').onclick = ()=>{
   store.set('pita_users', users);
   updateBalanceUI();
   closeModal('#depModal');
-  alertBox('Depósito Demo','R$ 100,00 adicionados ao seu saldo (simulação).');
+  alertBox('Depósito ','R$ 100,00 adicionados ao seu saldo.');
 }
 
 /* =======================
@@ -543,7 +543,7 @@ $('#confirmWithdraw').onclick = ()=>{
   const value = Math.floor(Number($('#wdValue').value||0));
   if(!name || !phone || !pix || value<=0) return alertBox('Erro','Preencha todos os campos corretamente.');
   if(value > getBalance()) return alertBox('Erro','Valor maior que o saldo disponível.');
-  const order = { id: uid(), name, phone, pix, value, status:'Pendente (manual - DEMO)', at:new Date().toISOString() };
+  const order = { id: uid(), name, phone, pix, value, status:'Pendente (manual)', at:new Date().toISOString() };
   users[session].orders = users[session].orders || [];
   users[session].orders.push(order);
   setBalance(getBalance()-value);
@@ -681,7 +681,7 @@ function buyTicket(){
   ensureAuth();
   if(scratch.bought && !scratch.revealed) return alertBox('Atenção','Raspe a cartela atual antes de comprar outra.');
   const price = Number($('#ticketPrice').value);
-  if(getBalance()<price) return alertBox('Saldo insuficiente', 'Faça um depósito demo ou use o código <strong>pitademo</strong>.');
+  if(getBalance()<price) return alertBox('Saldo insuficiente', 'Faça um depósito ou use o código <strong>pitademo</strong>.');
   setBalance(getBalance()-price);
   scratch.price = price;
   scratch.prizes = makeBoard(price);
@@ -764,7 +764,7 @@ const slotSymbols=['🍒','🍋','🔔','💎','⭐','7️⃣'];
 $('#slotSpin').onclick = ()=>{
   ensureAuth();
   const bet = Number($('#slotBet').value);
-  if(getBalance()<bet) return alertBox('Saldo insuficiente','Aposte um valor menor ou deposite no demo.');
+  if(getBalance()<bet) return alertBox('Saldo insuficiente','Aposte um valor menor ou deposite.');
   setBalance(getBalance()-bet);
   const reels = $$('#reels .reel');
   const res=[];
@@ -799,7 +799,7 @@ $('#aviStart').onclick = ()=>{
   ensureAuth();
   const bet = Math.floor(Number($('#aviBet').value||0));
   if(bet<=0) return alertBox('Erro','Aposta inválida.');
-  if(getBalance()<bet) return alertBox('Saldo insuficiente','Deposite no demo ou reduza a aposta.');
+  if(getBalance()<bet) return alertBox('Saldo insuficiente','Deposite ou reduza a aposta.');
   setBalance(getBalance()-bet);
   aviReset(); aviPlaying=true; $('#aviStatus').textContent='Voando…'; $('#aviCashout').disabled=false;
   const crashPoint = Math.max(1.05, Math.exp(Math.random()*1.6)); // biased
@@ -827,7 +827,7 @@ $('#dblSpin').onclick = ()=>{
   const bet = Math.floor(Number($('#dblBet').value||0));
   const pick = $('#dblChoice').value;
   if(bet<=0) return alertBox('Erro','Aposta inválida.');
-  if(getBalance()<bet) return alertBox('Saldo insuficiente','Deposite no demo ou reduza a aposta.');
+  if(getBalance()<bet) return alertBox('Saldo insuficiente','Deposite ou reduza a aposta.');
   setBalance(getBalance()-bet);
   // Biased roulette: red 47%, black 47%, green 6% (house edge)
   const r=Math.random();
@@ -884,8 +884,8 @@ function drawQR(sel, text){
 (function setupPWA(){
   // Manifest via blob
   const manifest = {
-    name: "Raspadinha do Pita — Demo",
-    short_name: "Pita Demo",
+    name: "Cassino do Pita — ",
+    short_name: "Cassino do Pita",
     start_url: ".",
     display: "standalone",
     background_color: "#0a0a12",
